@@ -3,7 +3,7 @@ import dotenv
 import boto3
 import os
 import json
-
+import uuid
 def r2_key(fid):
     return f"freezer {fid}"
 
@@ -35,19 +35,49 @@ s3 = boto3.client(
 BUCKET = os.environ["R2_BUCKET"]
 app = flask.Flask(__name__)
 
+@app.route("/addfreezer", methods=["POST"])
+def addfreezer():
+    try:
+        freezer_request = flask.request.get_json()
+        if freezer_request["secret"] == os.environ["SECRET_PASS"]:
+            fid = uuid.uuid4().hex[:6]
+            name = freezer_request["name"]
+            cid = uuid.uuid4().hex[:6]
+            payload = {"cid":cid, "fid": fid, "items": {}, "name": name}
+            s3.put_object(Bucket=BUCKET, Key=f"{fid}.txt",Body=payload)
+            return flask.jsonify({"Success":True, "fid":fid, "cid":cid}), 200
 
+        else:
+            return flask.jsonify({"Hacker":True}), 401
+    except Exception as e:
+        return flask.jsonify({"success": False, "error": str(e)}), 500
+@app.route("/deletefreezer", methods=["POST"])
+def deletefreezer():
+    try:
+        freezer_request = flask.request.get_json()
+        if freezer_request["secret"] == os.environ["SECRET_PASS"]:
+            fid = freezer_request["fid"]
+            s3.delete_object(Bucket=BUCKET, Key=f"{fid}.txt")
+            return flask.jsonify({"Success":True}), 200
+        else:
+            return flask.jsonify({"Hacker":True}), 401
+    except Exception as e:
+        return flask.jsonify({"Success":False,"error":str(e)}), 500
 @app.route("/")
 def hello():
-    return flask.jsonify({"active":True})
+    return flask.jsonify({"api":{"active":True},"meta":{"name":"The FreezerOne API","security":"Password Protected. Add secret to every post request JSON body with the value you have been given to authenticate.","endpoints":["/addfreezer [Adds a freezer to the FreezerOne servers. Requires name, gives creator ID (cid) and freezer ID (fid)]", "/deletefreezer [Delete freezer, requires fid.]", "/loadfreezer [Get the active freezer data, requires fid.]", "/updatefreezer [Send a JSON file of the freezer in the data portion of your request. Requires fid."]}})
 @app.route("/loadfreezer", methods=["POST"])
 def loadfreezer():
-    freezer_request = flask.request.get_json()
-    if freezer_request["secret"] == os.environ["SECRET_PASS"]:
-        fid = freezer_request["fid"]
-        data = get_s3(fid)
-        return flask.jsonify(data)
-    else:
-        return flask.jsonify({"Hacker":True}), 403
+    try:
+        freezer_request = flask.request.get_json()
+        if freezer_request["secret"] == os.environ["SECRET_PASS"]:
+            fid = freezer_request["fid"]
+            data = get_s3(fid)
+            return flask.jsonify(data)
+        else:
+            return flask.jsonify({"Hacker":True}), 401
+    except Exception as e:
+        return flask.jsonify({"Success":False,"error":str(e)}), 500
 @app.route("/updatefreezer", methods=["POST"])
 def updatefreezer():
     try:
@@ -59,7 +89,7 @@ def updatefreezer():
             update_s3(data, fid)
             return flask.jsonify({"Success":True})
         else:
-            return flask.jsonify({"Hacker":True}), 403
+            return flask.jsonify({"Hacker":True}), 401
     except Exception as e:
         return flask.jsonify({"Success":False,"error":str(e)}), 500
 if __name__ == "__main__":
