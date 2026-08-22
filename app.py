@@ -3,7 +3,7 @@ import dotenv
 import boto3
 import os
 import json
-import uuid
+
 def r2_key(fid):
     return f"freezer {fid}"
 
