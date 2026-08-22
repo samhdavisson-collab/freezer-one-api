@@ -43,8 +43,8 @@ def addfreezer():
             fid = uuid.uuid4().hex[:6]
             name = freezer_request["name"]
             cid = uuid.uuid4().hex[:6]
-            payload = {"cid":cid, "fid": fid, "items": {}, "name": name}
-            s3.put_object(Bucket=BUCKET, Key=f"{fid}.txt",Body=payload)
+            payload = json.dumps({"cid":cid, "fid": fid, "items": {}, "name": name})
+            s3.put_object(Bucket=BUCKET, Key=f"{r2_key(fid)}",Body=payload)
             return flask.jsonify({"Success":True, "fid":fid, "cid":cid}), 200
 
         else:
@@ -57,7 +57,7 @@ def deletefreezer():
         freezer_request = flask.request.get_json()
         if freezer_request["secret"] == os.environ["SECRET_PASS"]:
             fid = freezer_request["fid"]
-            s3.delete_object(Bucket=BUCKET, Key=f"{fid}.txt")
+            s3.delete_object(Bucket=BUCKET, Key=f"{r2_key(fid)}")
             return flask.jsonify({"Success":True}), 200
         else:
             return flask.jsonify({"Hacker":True}), 401
