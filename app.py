@@ -65,7 +65,7 @@ def deletefreezer():
         return flask.jsonify({"Success":False,"error":str(e)}), 500
 @app.route("/", methods=["POST"])
 def hello():
-    return flask.jsonify({"api":{"active":True},"meta":{"name":"The FreezerOne API","security":"Password Protected. Add secret to every post request JSON body with the value you have been given to authenticate.","endpoints":["/addfreezer [Adds a freezer to the FreezerOne servers. Requires name, gives creator ID (cid) and freezer ID (fid)]", "/deletefreezer [Delete freezer, requires fid.]", "/loadfreezer [Get the active freezer data, requires fid.]", "/updatefreezer [Send a JSON file of the freezer in the data portion of your request. Requires fid."]}})
+    return flask.jsonify({"api":{"active":True},"meta":{"name":"The FreezerOne API","security":"Password Protected. Add secret to every post request JSON body with the value you have been given to authenticate.","endpoints":["/addfreezer [Adds a freezer to the FreezerOne servers. Requires name, gives creator ID (cid) and freezer ID (fid).]", "/deletefreezer [Delete freezer, requires fid.]", "/loadfreezer [Get the active freezer data, requires fid.]", "/updatefreezer [Send a JSON file of the freezer in the data portion of your request. Requires fid.]"]}})
 @app.route("/loadfreezer", methods=["POST"])
 def loadfreezer():
     try:
